@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban Board</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .kanban-board {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .kanban-column {
+      flex: 1;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      min-height: 400px;
+    }
+    .kanban-column h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .kanban-item {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      font-size: 0.9rem;
+      cursor: grab;
+    }
+    .kanban-column.drag-over {
+      background-color: #e0f7fa;
+    }
+    .hidden {
+      visibility: hidden; /* Cache visuellement l'élément tout en conservant sa place. */
+    }
+  </style>
+</head>
+<body>
+  <h1>Kanban Board</h1>
+  <div class="kanban-board">
+    <!-- A FAIRE -->
+    <div class="kanban-column" data-status="todo">
+      <h2>A FAIRE</h2>
+      <div class="kanban-item" draggable="true">Analyser le site (vision téléphone et ordinateur).</div>
+      <div class="kanban-item" draggable="true">Proposer des boutons de redirection pour améliorer la navigation.</div>
+      <div class="kanban-item" draggable="true">Réorganiser les menus déroulants ("Yoga" et "Mes pratiques").</div>
+      <div class="kanban-item" draggable="true">Rendre le site plus léger pour réduire la consommation énergétique.</div>
+      <div class="kanban-item" draggable="true">Revoir la mise en page du Blog/Journal avant sa republication.</div>
+    </div>
+
+    <!-- EN COURS -->
+    <div class="kanban-column" data-status="in-progress">
+      <h2>EN COURS</h2>
+      <div class="kanban-item" draggable="true">Installer la police Quicksand et vérifier l'application sur tout le site.</div>
+      <div class="kanban-item" draggable="true">Changer la photo d'accueil sur la page d'accueil.</div>
+      <div class="kanban-item" draggable="true">Programmer les rappels SMS et mails automatiques</div>
+    </div>
+
+    <!-- REALISE -->
+    <div class="kanban-column" data-status="done">
+      <h2>REALISE</h2>
+      <div class="kanban-item" draggable="true">Vérification de conformité réglementaire du site.</div>
+      <div class="kanban-item" draggable="true">Analyse du trafic mise en place.</div>
+      <div class="kanban-item" draggable="true">Tutoriel pour intégrer des vidéos sur le site.</div>
+      <div class="kanban-item" draggable="true">Optimiser du SEO.</div>
+    </div>
+  </div>
+
+  <script>
+    const kanbanColumns = document.querySelectorAll('.kanban-column');
+    let draggedItem = null;
+
+    // Charger les données depuis localStorage
+    function loadBoard() {
+      const savedData = localStorage.getItem('kanbanBoard');
+      if (savedData) {
+        const boardData = JSON.parse(savedData);
+        kanbanColumns.forEach(column => {
+          const status = column.getAttribute('data-status');
+          column.innerHTML = `<h2>${column.querySelector('h2').textContent}</h2>`; // Réinitialise la colonne
+          boardData[status].forEach(itemText => {
+            const item = document.createElement('div');
+            item.className = 'kanban-item';
+            item.draggable = true;
+            item.textContent = itemText;
+            column.appendChild(item);
+          });
+        });
+        addDragAndDropEvents();
+      }
+    }
+
+    // Sauvegarder les données dans localStorage
+    function saveBoard() {
+      const boardData = {};
+      kanbanColumns.forEach(column => {
+        const status = column.getAttribute('data-status');
+        const items = column.querySelectorAll('.kanban-item');
+        boardData[status] = Array.from(items).map(item => item.textContent);
+      });
+      localStorage.setItem('kanbanBoard', JSON.stringify(boardData));
+    }
+
+    // Ajouter les événements drag and drop
+    function addDragAndDropEvents() {
+      document.querySelectorAll('.kanban-item').forEach(item => {
+        item.addEventListener('dragstart', () => {
+          draggedItem = item;
+          setTimeout(() => item.classList.add('hidden'), 0);
+        });
+
+        item.addEventListener('dragend', () => {
+          setTimeout(() => {
+            draggedItem.classList.remove('hidden');
+            draggedItem = null;
+          }, 0);
+          saveBoard();
+        });
+      });
+
+      kanbanColumns.forEach(column => {
+        column.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          column.classList.add('drag-over');
+        });
+
+        column.addEventListener('dragleave', () => {
+          column.classList.remove('drag-over');
+        });
+
+        column.addEventListener('drop', () => {
+          column.classList.remove('drag-over');
+          if (draggedItem) {
+            column.appendChild(draggedItem);
+            saveBoard();
+          }
+        });
+      });
+    }
+
+    // Charger le tableau au démarrage
+    loadBoard();
+    addDragAndDropEvents();
+  </script>
+</body>
+</html>
